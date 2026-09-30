@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#2E8B57"/>
+  <!-- Artwork kept inside the 80% safe zone so platform masks never clip it. -->
+  <g transform="translate(256 256) scale(0.68) translate(-256 -256)">
+    <path d="M176 336c0-86 54-150 172-161 0 118-59 172-118 172-21 0-54-11-54-11Z" fill="#B8E3C7"/>
+    <path d="M235 293c21-38 48-62 80-81" fill="none" stroke="#2E8B57" stroke-width="22" stroke-linecap="round"/>
+  </g>
+</svg>
