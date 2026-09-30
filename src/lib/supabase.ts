@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 
 /* ═══════════════════════════════════════════════════════════════════
    SUPABASE — server-side only.
@@ -91,12 +92,21 @@ export async function cacheLookup(key: string): Promise<CachedPayload | null> {
     const row = rows?.[0];
     if (!row?.payload) return null;
 
-    // Fire-and-forget hit counter: useful for seeing what the cache is
-    // actually saving, and never worth delaying a response for.
-    void safeFetch(`rpc/touch_cache`, {
-      method: "POST",
-      body: JSON.stringify({ p_key: key }),
-    }).catch(() => null);
+    // Hit counter — useful for seeing what the cache is actually saving, and
+    // never worth delaying a response for. Deferred via `after()` because a
+    // bare floating promise is killed when the serverless function freezes.
+    const bump = () =>
+      safeFetch("rpc/touch_cache", {
+        method: "POST",
+        body: JSON.stringify({ p_key: key }),
+      }).catch(() => null);
+
+    try {
+      after(bump);
+    } catch {
+      // No request context (script or test): the counter is not worth
+      // blocking on, so drop it rather than adding latency.
+    }
 
     return { ...row.payload, model: row.model ?? row.payload.model };
   } catch {

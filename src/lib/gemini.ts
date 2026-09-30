@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { cacheLookup, cacheStore } from "@/lib/supabase";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -229,14 +230,29 @@ export async function callGemini(
       if (opts.cacheAs) {
         const ttl = opts.cacheTtlMs ?? 24 * 60 * 60 * 1000;
         cacheSet(opts.cacheAs, result, ttl);
-        // Write-through to the shared cache, but never make the user wait
-        // for it — a slow database should not slow down their answer.
-        void cacheStore(
-          opts.cacheAs,
-          opts.kind ?? "generic",
-          { text: result.text, sources: result.sources, model: result.model },
-          ttl
-        ).catch(() => undefined);
+
+        // Write-through to the shared cache WITHOUT making the user wait.
+        //
+        // This must go through `after()`, not a bare floating promise: on
+        // serverless the function is frozen the moment the response is sent,
+        // so `void cacheStore(...)` silently never completed and the shared
+        // cache stayed permanently empty. `after()` is the supported way to
+        // keep the invocation alive until the write lands.
+        const write = () =>
+          cacheStore(
+            opts.cacheAs!,
+            opts.kind ?? "generic",
+            { text: result.text, sources: result.sources, model: result.model },
+            ttl
+          ).catch(() => undefined);
+
+        try {
+          after(write);
+        } catch {
+          // Outside a request context (a script, a test) there is nothing to
+          // defer to, so just run it.
+          await write();
+        }
       }
       return result;
     } catch (err) {
