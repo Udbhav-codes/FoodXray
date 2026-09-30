@@ -10,7 +10,7 @@ type Dict = Record<string, { en: string; hi: string }>;
 
 export const STRINGS: Dict = {
   // ── App & navigation ──
-  appName: { en: "PoshanLens", hi: "पोषणLens" },
+  appName: { en: "FoodXray", hi: "FoodXray" },
   tagline: {
     en: "Read any label. Understand it in seconds.",
     hi: "कोई भी लेबल पढ़िए। सेकंडों में समझिए।",

@@ -1,4 +1,4 @@
-/** Core domain types for PoshanLens. Mirrors the spec §9 and §13. */
+/** Core domain types for FoodXray. Mirrors the spec §9 and §13. */
 
 export type Lang = "en" | "hi";
 

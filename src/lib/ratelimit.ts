@@ -43,7 +43,7 @@ function bucketFor(req: Request, route: RouteName, windowMs: number): string {
   const ip = clientIp(req);
   const window = Math.floor(Date.now() / windowMs);
   // Salted so the hashes are not reversible via a rainbow table of IPs.
-  const salt = process.env.RATE_LIMIT_SALT ?? "poshanlens";
+  const salt = process.env.RATE_LIMIT_SALT ?? "foodxray";
   return createHash("sha256")
     .update(`${salt}:${ip}:${route}:${window}`)
     .digest("hex")

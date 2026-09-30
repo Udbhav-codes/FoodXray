@@ -1,6 +1,6 @@
-# PoshanLens — Full Product & Design Specification
+# FoodXray — Full Product & Design Specification
 
-> **Working name:** PoshanLens (पोषणLens)
+> **Working name:** FoodXray (FoodXray)
 > *Alternatives to consider: LabelPadho (लेबल पढ़ो), SachhaLabel, NeemScan, PaanLabel*
 > **Platform:** Android (mobile-first), Flutter or React Native
 > **Category:** Packaged-food ingredient decoder + personalised nutrition advisor

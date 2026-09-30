@@ -43,7 +43,7 @@ interface Body {
 }
 
 const SYSTEM = `
-You write short health notes for PoshanLens, an Indian packaged-food label app.
+You write short health notes for FoodXray, an Indian packaged-food label app.
 
 ${SAFETY_RULES}
 

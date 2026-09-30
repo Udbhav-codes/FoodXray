@@ -28,12 +28,12 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PoshanLens — Read any food label",
+  title: "FoodXray — Read any food label",
   description:
     "Point your camera at any ingredient list. Get a verdict you can actually understand, in your language, for your body — and know what to buy instead.",
-  applicationName: "PoshanLens",
+  applicationName: "FoodXray",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "PoshanLens", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "FoodXray", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 
@@ -49,7 +49,7 @@ export const viewport: Viewport = {
 /** Applies the saved theme before first paint so there is no light flash. */
 const THEME_SCRIPT = `
 (function(){try{
-  var s=localStorage.getItem('poshanlens.v1');
+  var s=localStorage.getItem('foodxray.v1');
   var t='system', l='en';
   if(s){var p=JSON.parse(s); t=p.theme||'system'; l=p.lang||'en';}
   var d = t==='dark' || (t==='system' && matchMedia('(prefers-color-scheme: dark)').matches);

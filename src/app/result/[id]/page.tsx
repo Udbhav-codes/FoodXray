@@ -117,7 +117,7 @@ export default function ResultPage() {
   const share = async () => {
     const text = `${scan.product_name} — ${scan.score}/100 (Grade ${scan.grade})\n${
       ribbon.good
-    } good · ${ribbon.average} average · ${ribbon.avoid} avoid\n— PoshanLens`;
+    } good · ${ribbon.average} average · ${ribbon.avoid} avoid\n— FoodXray`;
     try {
       if (navigator.share) await navigator.share({ title: scan.product_name, text });
       else {

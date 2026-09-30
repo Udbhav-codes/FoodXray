@@ -36,7 +36,7 @@ interface Body {
 }
 
 const SYSTEM = `
-You answer questions about a specific packaged food label inside PoshanLens,
+You answer questions about a specific packaged food label inside FoodXray,
 an Indian food-label app. The person is standing in a shop looking at the pack.
 
 ${SAFETY_RULES}

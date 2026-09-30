@@ -19,7 +19,7 @@ import { ALLERGEN_META, CONDITION_META, nutrientLoads } from "@/lib/personalise"
       user can switch AI off entirely in Settings.
    ═══════════════════════════════════════════════════════════════════ */
 
-const CACHE_PREFIX = "poshanlens.ai.";
+const CACHE_PREFIX = "foodxray.ai.";
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 
 function readCache<T>(key: string): T | null {

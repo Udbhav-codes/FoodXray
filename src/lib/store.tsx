@@ -26,7 +26,15 @@ import type {
    and no analytics beacon. "Delete all my data" genuinely erases.
    ═══════════════════════════════════════════════════════════════════ */
 
-const KEY = "poshanlens.v1";
+const KEY = "foodxray.v1";
+
+/**
+ * The app was renamed from its old working title, which moved the storage
+ * key. Without this, anyone who had already saved a profile would open the
+ * app to find their data silently gone. Runs once, then the old key is
+ * cleared so it never runs again.
+ */
+const LEGACY_KEY = "poshanlens.v1";
 
 export type ThemeChoice = "light" | "dark" | "system";
 
@@ -110,7 +118,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // ── Hydrate once on mount. ──
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(KEY);
+      let raw = localStorage.getItem(KEY);
+
+      // Carry data over from the pre-rename key, once.
+      if (!raw) {
+        const legacy = localStorage.getItem(LEGACY_KEY);
+        if (legacy) {
+          localStorage.setItem(KEY, legacy);
+          localStorage.removeItem(LEGACY_KEY);
+          raw = legacy;
+        }
+      }
+
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<Persisted>;
         setState({ ...EMPTY, ...parsed });

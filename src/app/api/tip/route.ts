@@ -30,7 +30,7 @@ interface Body {
 }
 
 const SYSTEM = `
-You write the "Did you know?" card in PoshanLens, an Indian food-label app.
+You write the "Did you know?" card in FoodXray, an Indian food-label app.
 
 ${SAFETY_RULES}
 

@@ -1,6 +1,6 @@
 {
-  "name": "PoshanLens — Read any food label",
-  "short_name": "PoshanLens",
+  "name": "FoodXray — Read any food label",
+  "short_name": "FoodXray",
   "description": "Point your camera at any ingredient list. Get a verdict you can actually understand, in your language, for your body.",
   "start_url": "/",
   "display": "standalone",
