@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLookup, cacheStore } from "@/lib/supabase";
 
 /* ═══════════════════════════════════════════════════════════════════
    GEMINI CLIENT — server-side only.
@@ -112,14 +113,30 @@ export function cacheKey(...parts: (string | number | undefined)[]): string {
 
 export async function callGemini(
   call: GeminiCall,
-  opts: { cacheAs?: string; cacheTtlMs?: number } = {}
+  opts: { cacheAs?: string; cacheTtlMs?: number; kind?: string } = {}
 ): Promise<GeminiResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new GeminiError("GEMINI_API_KEY is not set", 500, false);
 
+  // Two-tier cache. L1 is this process's memory, which on Vercel lives only
+  // as long as one warm lambda. L2 is Supabase, shared across every instance
+  // AND every user — so an ingredient resolved once is free globally
+  // thereafter (spec §11.4). Without L2 the cache would barely function.
   if (opts.cacheAs) {
-    const hit = cacheGet(opts.cacheAs);
-    if (hit) return hit;
+    const warm = cacheGet(opts.cacheAs);
+    if (warm) return warm;
+
+    const shared = await cacheLookup(opts.cacheAs);
+    if (shared?.text) {
+      const result: GeminiResult = {
+        text: shared.text,
+        sources: shared.sources ?? [],
+        model: shared.model ?? "cache",
+      };
+      // Promote into L1 so repeat hits on this instance skip the round trip.
+      cacheSet(opts.cacheAs, result, opts.cacheTtlMs ?? 24 * 60 * 60 * 1000);
+      return result;
+    }
   }
 
   const body: Record<string, unknown> = {
@@ -210,7 +227,16 @@ export async function callGemini(
       const result: GeminiResult = { text, sources, model };
 
       if (opts.cacheAs) {
-        cacheSet(opts.cacheAs, result, opts.cacheTtlMs ?? 24 * 60 * 60 * 1000);
+        const ttl = opts.cacheTtlMs ?? 24 * 60 * 60 * 1000;
+        cacheSet(opts.cacheAs, result, ttl);
+        // Write-through to the shared cache, but never make the user wait
+        // for it — a slow database should not slow down their answer.
+        void cacheStore(
+          opts.cacheAs,
+          opts.kind ?? "generic",
+          { text: result.text, sources: result.sources, model: result.model },
+          ttl
+        ).catch(() => undefined);
       }
       return result;
     } catch (err) {

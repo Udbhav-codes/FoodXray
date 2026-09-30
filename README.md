@@ -1,4 +1,4 @@
-# FOODXRAY
+# PoshanLens (पोषणLens)
 
 **Point your camera at any ingredient list. Get a verdict you can actually understand, in your language, for your body — and know what to buy instead.**
 

@@ -8,6 +8,8 @@ import {
   SAFETY_RULES,
 } from "@/lib/gemini";
 
+import { enforceRate } from "@/lib/ratelimit";
+
 export const runtime = "nodejs";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -45,6 +47,9 @@ Rules:
 `.trim();
 
 export async function POST(req: Request) {
+  const limited = await enforceRate(req, "tip");
+  if (limited) return limited;
+
   if (!aiConfigured()) {
     return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
   }
@@ -94,7 +99,7 @@ Write today's tip.
         maxOutputTokens: 800,
         timeoutMs: 12_000,
       },
-      { cacheAs: key, cacheTtlMs: 24 * 60 * 60 * 1000 }
+      { cacheAs: key, kind: "tip", cacheTtlMs: 24 * 60 * 60 * 1000 }
     );
 
     return NextResponse.json({ text: result.text, model: result.model });

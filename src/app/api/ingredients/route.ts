@@ -9,6 +9,8 @@ import {
   SAFETY_RULES,
 } from "@/lib/gemini";
 
+import { enforceRate } from "@/lib/ratelimit";
+
 export const runtime = "nodejs";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -94,6 +96,9 @@ const VALID_ALLERGENS = new Set([
 ]);
 
 export async function POST(req: Request) {
+  const limited = await enforceRate(req, "ingredients");
+  if (limited) return limited;
+
   if (!aiConfigured()) {
     return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
   }
@@ -140,7 +145,7 @@ for trans fat.
         maxOutputTokens: 8192,
         timeoutMs: 25_000,
       },
-      { cacheAs: key, cacheTtlMs: 30 * 24 * 60 * 60 * 1000 }
+      { cacheAs: key, kind: "ingredients", cacheTtlMs: 30 * 24 * 60 * 60 * 1000 }
     );
 
     const parsed = parseJson<Resolved[]>(result.text);

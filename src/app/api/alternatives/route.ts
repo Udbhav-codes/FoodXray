@@ -9,6 +9,8 @@ import {
   SAFETY_RULES,
 } from "@/lib/gemini";
 
+import { enforceRate } from "@/lib/ratelimit";
+
 export const runtime = "nodejs";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -64,6 +66,9 @@ Rules that matter more than being helpful:
 `.trim();
 
 export async function POST(req: Request) {
+  const limited = await enforceRate(req, "alternatives");
+  if (limited) return limited;
+
   if (!aiConfigured()) {
     return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
   }
@@ -146,7 +151,7 @@ Return [] if you cannot find a genuinely better option. Do not pad the list.
         timeoutMs: 30_000,
       },
       // Shorter TTL than ingredient facts: the market actually moves.
-      { cacheAs: key, cacheTtlMs: 12 * 60 * 60 * 1000 }
+      { cacheAs: key, kind: "alternatives", cacheTtlMs: 12 * 60 * 60 * 1000 }
     );
 
     const parsed = parseJson<unknown[]>(result.text);

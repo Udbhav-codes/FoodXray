@@ -8,6 +8,8 @@ import {
   SAFETY_RULES,
 } from "@/lib/gemini";
 
+import { enforceRate } from "@/lib/ratelimit";
+
 export const runtime = "nodejs";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -56,6 +58,9 @@ Style:
 `.trim();
 
 export async function POST(req: Request) {
+  const limited = await enforceRate(req, "explain");
+  if (limited) return limited;
+
   if (!aiConfigured()) {
     return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
   }
@@ -135,7 +140,7 @@ Write the explanation.
         maxOutputTokens: 1200,
         timeoutMs: 15_000,
       },
-      { cacheAs: key, cacheTtlMs: 7 * 24 * 60 * 60 * 1000 }
+      { cacheAs: key, kind: "explain", cacheTtlMs: 7 * 24 * 60 * 60 * 1000 }
     );
 
     return NextResponse.json({ text: result.text, model: result.model });

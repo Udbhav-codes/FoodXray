@@ -7,6 +7,8 @@ import {
   SAFETY_RULES,
 } from "@/lib/gemini";
 
+import { enforceRate } from "@/lib/ratelimit";
+
 export const runtime = "nodejs";
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -58,6 +60,9 @@ Style:
 const MAX_QUESTION = 300;
 
 export async function POST(req: Request) {
+  const limited = await enforceRate(req, "ask");
+  if (limited) return limited;
+
   if (!aiConfigured()) {
     return NextResponse.json({ error: "ai_not_configured" }, { status: 503 });
   }
