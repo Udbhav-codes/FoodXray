@@ -6,6 +6,55 @@ A mobile-first web app that decodes Indian packaged-food labels. Built from the 
 
 ---
 
+**Live:** [food-xray.vercel.app](https://food-xray.vercel.app)
+
+## Deployment
+
+Vercel (`bom1` / Mumbai) + Supabase (`ap-south-1` / Mumbai). Functions are
+pinned to Mumbai in `vercel.json` so they sit next to both the database and
+the users this is built for.
+
+### Environment variables
+
+| Variable | Purpose |
+|---|---|
+| `GEMINI_API_KEY` | Google Gemini. Server-side only — never `NEXT_PUBLIC_`. |
+| `GEMINI_MODEL` | Fallback chain, tried in order. Defaults to `gemini-flash-latest,gemini-3.6-flash,gemini-flash-lite-latest`. |
+| `SUPABASE_URL` | Project URL for the shared cache and rate limiting. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Bypasses RLS. Server-side only. |
+| `RATE_LIMIT_SALT` | Salts the IP hash so rate-limit buckets are not reversible. |
+
+Use the `-latest` model alias rather than pinning a version: pinned models get
+closed to new API keys and start returning 404, which is what broke the first
+attempt at this integration.
+
+### Two serverless-specific gotchas, both fixed here
+
+- **Vercel blocks vulnerable Next.js versions at build time.** A build failing
+  with `VULNERABLE_NEXTJS_VERSION` is not a config problem — upgrade Next.
+- **A floating promise after the response never runs.** The function is frozen
+  as soon as it responds, so `void cacheStore(...)` silently did nothing and
+  the shared cache stayed empty while every request paid full price. Deferred
+  work has to go through `after()` from `next/server`.
+
+### Database
+
+Two tables, neither holding personal data. Health data stays on the device.
+
+- `ai_cache` — Gemini responses keyed by request hash, shared across every
+  instance and every user, so an ingredient resolved once is free globally.
+- `rate_limits` — per-IP counters. Stores a salted SHA-256 of the IP, never
+  the IP. Incremented through an atomic Postgres function so concurrent
+  requests cannot both read a stale count.
+
+Both have RLS enabled with **no policies**, so only the service role can reach
+them, and the `SECURITY DEFINER` helpers have `EXECUTE` revoked from `anon`
+and `authenticated` — otherwise anyone could have called them over the public
+REST API to wipe the cache.
+
+The limiter **fails open** if the database is unreachable: the cost of an
+outage is a bigger Gemini bill, not a broken app.
+
 ## Running it
 
 ```bash
@@ -202,7 +251,8 @@ This is a working implementation of the specification, not a shipped product. Wh
 - Nearby availability is illustrative. Level 1 (Google Places) and Level 2 (quick-commerce APIs) are not wired up.
 - Condition rules need sign-off from a qualified nutritionist before this goes anywhere near real users. That is a hard prerequisite, not a nice-to-have.
 - AI alternatives are **search-grounded, not inventory-checked**. Gemini can confirm a product is sold in India; it cannot confirm a specific shop has it today. The UI says exactly that and never claims stock.
-- There is no rate limiting on the AI routes yet. Before any public deployment, add per-IP limits — spec §11.4 suggests ~20 AI-assisted scans/day on the free tier — or the key is trivially drained.
+- **Search-grounded alternatives need a paid Gemini key.** Google Search grounding has its own, much tighter free-tier quota than ordinary generation. On the free tier the `/api/alternatives` route returns 429 once it is exhausted; the app degrades to the bundled catalogue rather than erroring, but live results stop appearing until the quota resets or billing is enabled.
+- Rate limits are per-IP and enforced in Postgres, but an attacker with many IPs can still run up a bill. For real exposure, put the AI routes behind an auth check or a CAPTCHA rather than relying on IP limits alone.
 
 ---
 
